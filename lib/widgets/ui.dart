@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../constants/portfolio_data.dart';
+
 /// Shared building blocks for the portfolio layout.
 
 const double kMaxContentWidth = 1180;
@@ -8,6 +10,9 @@ const double kMaxContentWidth = 1180;
 Future<void> openLink(String url) async {
   await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 }
+
+/// Opens the CV PDF served next to the site (works under any base path).
+Future<void> openCv() => openLink(Uri.base.resolve(PortfolioData.cvFile).toString());
 
 bool isNarrow(BuildContext context) => MediaQuery.sizeOf(context).width < 900;
 

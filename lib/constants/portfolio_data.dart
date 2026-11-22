@@ -65,33 +65,37 @@ class Principle {
 class PortfolioData {
   static const name = 'Hanine Guesmi';
   static const role = 'Mobile Engineer';
+  static const location = 'Tunisia · Open to relocation';
   static const email = 'hanine.guesmi.work@gmail.com';
   static const githubUrl = 'https://github.com/hanineguesmi';
   static const linkedinUrl = 'https://linkedin.com/in/hanine-guesmi-61218a195';
 
+  /// The CV PDF lives in web/ so it is served next to the site.
+  static const cvFile = 'Hanine_Guesmi_CV.pdf';
+
   static const heroDescription =
-      "I'm Hanine, a Mobile Engineer specializing in Flutter and native Android. "
-      'I design, build and ship production apps end to end: clean architecture, '
-      'smooth performance and pixel-perfect interfaces.';
+      "I'm Hanine, a Mobile Engineer with 5 years of experience in Flutter and Kotlin. "
+      'I build scalable, high-performance apps with Clean Architecture, with a strong '
+      'focus on code quality, maintainability and UI/UX.';
 
   static const heroStats = [
-    Metric('4+', 'Years building apps'),
+    Metric('5', 'Years building apps'),
     Metric('8+', 'Production apps'),
     Metric('100K+', 'TakiAcademy downloads'),
     Metric('70%', 'Fewer crashes'),
   ];
 
-  static const companies = ['Neo', 'Servini', 'Softylines', 'BinYdik', 'Houloul'];
+  static const companies = ['Servini Solutions', 'Softylines', 'BinYdik', 'TakiAcademy', 'LinkFoot'];
 
   static const featuredProjects = [
     Project(
       name: 'TakiAcademy',
-      category: 'E-learning at national scale',
+      category: "Tunisia's first e-learning app",
       description:
-          'The first Tunisian e-learning app. I built video streaming and playback, '
-          'progress tracking and gamified learning modules used by students across the country.',
+          'Video streaming and progress tracking over Socket.IO, in-app purchases and '
+          'Click-to-Pay payments, used by students across the country.',
       tags: ['Flutter', 'E-learning', 'Softylines'],
-      tech: 'Flutter · Socket.IO · VdoCipher',
+      tech: 'Flutter · FCM · Socket.IO · VdoCipher · In-App Purchases · reCAPTCHA',
       icon: Icons.school_rounded,
       metrics: [Metric('100K+', 'Downloads'), Metric('1st', 'Tunisian e-learning app')],
       playUrl:
@@ -104,7 +108,7 @@ class PortfolioData {
           'Built from scratch with full ownership of architecture, UI/UX (no Figma), development '
           'and testing. Real-time chat, QR and barcode scanning, and releases on both stores.',
       tags: ['Flutter', 'iOS & Android', 'Freelance'],
-      tech: 'Flutter · Real-time chat · Scanner',
+      tech: 'Flutter · Real-time chat · QR & barcode scanning',
       icon: Icons.storefront_rounded,
       metrics: [Metric('1K+', 'Downloads, trending on Play'), Metric('2', 'App stores')],
       playUrl:
@@ -112,37 +116,47 @@ class PortfolioData {
       appStoreUrl: 'https://apps.apple.com/tn/app/binydik/id6759522629',
     ),
     Project(
-      name: 'mozn',
-      category: 'Financial intelligence',
+      name: 'Servini ERP',
+      category: 'Cross-platform ERP',
       description:
-          'An advanced platform for financial intelligence, central to risk management and '
-          'fraud prevention, with Moyasar payment integration. Built as a consultant at Neo.',
-      tags: ['Flutter', 'Fintech', 'Neo'],
-      tech: 'Flutter · Analytics · Security · Moyasar',
-      icon: Icons.insights_rounded,
+          'An Enterprise Resource Planning app for mobile, iPad and tablet, desktop and web, '
+          'integrated with backend services through GraphQL.',
+      tags: ['Flutter', 'ERP', 'Servini Solutions'],
+      tech: 'Flutter · GraphQL',
+      icon: Icons.dashboard_rounded,
+      metrics: [Metric('4', 'Platforms: mobile, tablet, desktop, web')],
     ),
     Project(
-      name: 'Servini ERP',
-      category: 'Restaurant operations, real time',
+      name: 'LinkFoot',
+      category: 'Football community',
       description:
-          'A comprehensive ERP for tablet and mobile: Kitchen Display System, Fiche Technique '
-          'and dynamic reporting, with real-time data through GraphQL and Apollo.',
-      tags: ['Flutter', 'ERP', 'Servini'],
-      tech: 'Flutter · GraphQL · Apollo',
-      icon: Icons.dashboard_rounded,
-      metrics: [Metric('KDS', 'Real-time kitchen display'), Metric('Tablet', 'and mobile layouts')],
+          'Team matching, reels, audio and video calls, private and group chats, '
+          'and push notifications.',
+      tags: ['Flutter', 'Social', 'Softylines'],
+      tech: 'Flutter · FCM · WebRTC · Socket.IO · Stripe',
+      icon: Icons.sports_soccer_rounded,
+      playUrl:
+          'https://play.google.com/store/apps/details?id=com.linkefoot.linkefootApp&hl=fr',
     ),
   ];
 
   static const moreProjects = [
     Project(
-      name: 'gift4You',
-      category: 'Digital gifting',
-      description:
-          'A strategic platform that boosts customer engagement and simplifies digital gifting.',
+      name: 'Sultan',
+      category: 'Online grocery store',
+      description: 'Grocery shopping with payments, maps and rich media, on both stores.',
       tags: [],
-      tech: 'Flutter · UI/UX · REST APIs',
-      icon: Icons.card_giftcard_rounded,
+      tech: 'Flutter · FCM · Stripe · Google Maps · Animations',
+      icon: Icons.shopping_basket_rounded,
+    ),
+    Project(
+      name: 'Chichkhan & Boritos',
+      category: 'Restaurant management',
+      description: 'Two restaurant apps: a delivery app and an admin app.',
+      tags: [],
+      tech: 'Flutter · FCM · Flavors · Geolocator',
+      icon: Icons.restaurant_rounded,
+      playUrl: 'https://play.google.com/store/apps/details?id=com.chichkhan.app',
     ),
     Project(
       name: 'Taki Kids',
@@ -163,34 +177,13 @@ class PortfolioData {
       icon: Icons.inventory_2_rounded,
       webUrl: 'https://www.proximabel.com/',
     ),
-    Project(
-      name: 'LinkFoot',
-      category: 'Football community',
-      description:
-          'Team matching, Reels, voice and video calls, private and group chat.',
-      tags: [],
-      tech: 'Flutter · FCM · WebRTC · Socket.IO · Stripe',
-      icon: Icons.sports_soccer_rounded,
-      playUrl:
-          'https://play.google.com/store/apps/details?id=com.linkefoot.linkefootApp&hl=fr',
-    ),
-    Project(
-      name: 'Chichkhan & Boritos',
-      category: 'Restaurant SaaS',
-      description:
-          'Two SaaS apps for restaurant management: a delivery app and an admin app.',
-      tags: [],
-      tech: 'Flutter · FCM · Flavors',
-      icon: Icons.restaurant_rounded,
-      playUrl: 'https://play.google.com/store/apps/details?id=com.chichkhan.app',
-    ),
   ];
 
   static const principles = [
     Principle(
       Icons.account_tree_outlined,
       'Clean architecture',
-      'Layered, testable code and thorough code reviews that keep teams moving fast.',
+      'Clean Architecture, MVVM and dependency injection for code that stays maintainable.',
     ),
     Principle(
       Icons.speed_rounded,
@@ -199,76 +192,68 @@ class PortfolioData {
     ),
     Principle(
       Icons.verified_outlined,
-      'Tested and shipped',
-      'Unit and integration tests, Crashlytics and CI/CD: 70% fewer crashes, 50% faster releases.',
+      'Tested and stable',
+      'Unit, widget and integration tests with Crashlytics: 70% fewer crashes.',
     ),
     Principle(
-      Icons.auto_awesome_outlined,
-      'Pixel-perfect UI',
-      'Close work with designers, product and QA to deliver interfaces that feel right.',
+      Icons.groups_outlined,
+      'Team player',
+      'Agile and Scrum work with designers, backend developers, product owners and QA.',
     ),
   ];
 
   static const jobs = [
-    Job('Developer Consultant', 'Neo', 'Tunisia', '2026 – Present', [
-      'Expert technical consultancy and mobile development with international teams on key enterprise projects.',
-      'Contributed to gift4You, a platform that boosts customer engagement and simplifies digital gifting.',
-      'Worked on mozn, a financial intelligence platform for risk management and fraud prevention, with Moyasar integration.',
-      'Built features for RMS (Resource Management System) to optimize resource allocation and efficiency.',
+    Job('Flutter Developer', 'Servini Solutions', 'Sousse, Tunisia', '02/2026 – Present', [
+      'Developed a cross-platform ERP application for mobile, iPad/tablet, desktop and web.',
+      'Worked with cross-functional teams on high-quality deliverables and smooth backend integration using GraphQL.',
     ]),
-    Job('Mobile Developer – Flutter', 'Servini', 'Tunisia', '02/2026 – Present', [
-      'Developing a comprehensive ERP optimized for tablet and mobile with Flutter.',
-      'Implementing Fiche Technique, Kitchen Display System (KDS) and dynamic reporting.',
-      'Integrating real-time features with GraphQL and the Apollo client.',
-    ]),
-    Job('Mobile Developer – Flutter (BinYdik)', 'Freelance', 'Sousse, Tunisia', '03/2026 – Present', [
-      'Built BinYdik from scratch: architecture, UI/UX (no Figma), development and testing for iOS and Android.',
+    Job('Mobile Developer – Flutter (BinYdik)', 'Freelance', 'Sousse, Tunisia', '12/2025 – 02/2026', [
+      'Built BinYdik from scratch, owning the architecture, UI/UX design (no Figma), development and testing.',
+      'Launched the latest Android version, which passed 1K+ downloads and trended on the Play Store.',
       'Implemented real-time chat and robust QR and barcode scanning.',
-      'Managed end-to-end releases on Google Play and the App Store; the Android app passed 1K+ downloads and trended on Play.',
-      'Delivered a Flutter e-commerce app (catalog, cart, checkout, Google Maps), 40% faster with AI-assisted tooling.',
+      'Managed end-to-end releases on Google Play and the App Store.',
     ]),
-    Job('Mobile Developer – Flutter & Kotlin', 'Softylines', 'Sousse, Tunisia', '09/2021 – 09/2025', [
-      'Built 8+ cross-platform and native production apps (e-commerce, social, edtech) with measurable results.',
-      'Worked with designers, back-end engineers, product owners, scrum masters and QA to deliver pixel-perfect UI.',
-      'Led code reviews, enforced Clean Architecture and mentored 2 junior Flutter developers.',
-      'Improved responsiveness and stability by profiling with Flutter DevTools.',
-      'Cut crash rates by 70% with unit and integration tests and Crashlytics.',
-      'Set up CI/CD with GitHub Actions, making releases 50% faster.',
-    ]),
-    Job("Final Year Internship – Bachelor's", 'Houloul', 'Sousse, Tunisia', '02/2021 – 07/2021', [
-      'Analysis, design and development of a Django/Python order-tracking web app with Raspberry Pi camera integration.',
+    Job('Mobile Developer – Flutter & Android (Kotlin)', 'Softylines', 'Sousse, Tunisia', '09/2021 – 11/2025', [
+      'Developed and maintained 8+ production apps (e-commerce, social networking, edtech).',
+      'Collaborated with designers, backend developers, product owners, Scrum Masters and QA.',
+      'Took part in Agile ceremonies and sprint planning.',
+      'Cut crash rates by 70% with unit and integration tests and Firebase Crashlytics.',
+      'Improved responsiveness and performance with Flutter DevTools.',
     ]),
   ];
 
   static const degrees = [
-    Degree('Engineering Degree in Software Engineering', 'Polytechnic University of Sousse',
+    Degree('National Software Engineering Degree', 'Polytechnic School of Sousse',
         'Sousse, Tunisia', '2021 – 2025', 'High honors'),
     Degree("Bachelor's in Information Technology", 'Higher Institute of Technological Studies',
         'Kairouan, Tunisia', '2018 – 2021', 'High honors'),
   ];
 
   static const about = [
-    "Hello! I'm Hanine, a passionate Mobile Engineer with 4+ years of experience "
-        'building beautiful and functional mobile applications.',
-    'I specialize in Flutter and native Android, with a strong focus on responsive, '
-        'accessible interfaces. My goal is to build apps that not only look great but '
-        'also feel effortless to use.',
+    "Hello! I'm Hanine, a Mobile Engineer with 5 years of experience in Flutter and "
+        'Kotlin, based in Tunisia and open to relocation.',
+    'I build scalable, high-performance apps with Clean Architecture, with solid '
+        'experience in API integration and Agile/Scrum teams. I care about code quality, '
+        'maintainability and interfaces that feel effortless to use.',
   ];
 
   static const skills = [
     'Flutter & Dart',
     'Kotlin & Jetpack Compose',
-    'BLoC & Riverpod',
-    'Clean Architecture',
-    'Firebase',
-    'REST APIs & WebSockets',
-    'GraphQL & Apollo',
-    'SQLite / Room / Hive',
-    'CI/CD & Git',
-    'Crashlytics & testing',
+    'BLoC · Riverpod · Provider',
+    'Clean Architecture · MVVM',
+    'GetIt · Injectable · Hilt',
+    'GraphQL & REST (Dio, Retrofit)',
+    'Firebase · FCM · Crashlytics',
+    'SQLite · Hive · Room',
+    'SSL pinning · Secure storage',
+    'Unit, widget & integration tests',
+    'Fastlane · TestFlight · Play Console',
   ];
 
+  static const spokenLanguages = 'Arabic (native) · English (fluent) · French (advanced)';
+
   static const contactText =
-      "I'm currently open to new opportunities and my inbox is always open. "
+      "I'm currently open to new opportunities, including relocation. "
       "Whether you have a project in mind or just want to say hi, I'll get back to you.";
 }

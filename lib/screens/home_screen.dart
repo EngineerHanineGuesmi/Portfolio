@@ -130,7 +130,7 @@ class _Hero extends StatelessWidget {
     final text = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Eyebrow('Open to new opportunities'),
+        const Eyebrow('Open to work · Open to relocation'),
         const SizedBox(height: 24),
         AccentTitle(
           const [
@@ -154,6 +154,12 @@ class _Hero extends StatelessWidget {
           children: [
             PillButton(label: 'Explore my work', icon: Icons.arrow_downward_rounded, onPressed: onWork),
             PillButton(label: "Let's talk", filled: false, onPressed: onContact),
+            PillButton(
+              label: 'Download CV',
+              icon: Icons.file_download_outlined,
+              filled: false,
+              onPressed: openCv,
+            ),
           ],
         ),
         const SizedBox(height: 40),
@@ -701,6 +707,11 @@ class _AboutSection extends StatelessWidget {
               filled: false,
               onPressed: () => openLink(PortfolioData.githubUrl),
             ),
+            PillButton(
+              label: 'Download CV',
+              icon: Icons.file_download_outlined,
+              onPressed: openCv,
+            ),
           ],
         ),
       ],
@@ -768,6 +779,11 @@ class _AboutSection extends StatelessWidget {
               ),
           ],
         ),
+        const SizedBox(height: 20),
+        Text('LANGUAGES', style: theme.caps()),
+        const SizedBox(height: 6),
+        Text(PortfolioData.spokenLanguages,
+            style: theme.body(size: 14.5, weight: FontWeight.w600, color: theme.colorScheme.onSurface)),
       ],
     );
 
@@ -868,6 +884,12 @@ class _ContactSection extends StatelessWidget {
                       icon: FontAwesomeIcons.github,
                       filled: false,
                       onPressed: () => openLink(PortfolioData.githubUrl),
+                    ),
+                    PillButton(
+                      label: 'CV',
+                      icon: Icons.file_download_outlined,
+                      filled: false,
+                      onPressed: openCv,
                     ),
                   ],
                 ),
