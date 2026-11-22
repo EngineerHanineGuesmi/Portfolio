@@ -85,7 +85,7 @@ class PortfolioData {
     Metric('70%', 'Fewer crashes'),
   ];
 
-  static const companies = ['Servini Solutions', 'Softylines', 'BinYdik', 'TakiAcademy', 'LinkFoot'];
+  static const companies = ['NEO', 'Servini Solutions', 'Softylines', 'BinYdik', 'TakiAcademy', 'LinkFoot'];
 
   static const featuredProjects = [
     Project(
@@ -116,6 +116,16 @@ class PortfolioData {
       appStoreUrl: 'https://apps.apple.com/tn/app/binydik/id6759522629',
     ),
     Project(
+      name: 'mozn',
+      category: 'Financial intelligence',
+      description:
+          'An advanced platform for financial intelligence, central to risk management and '
+          'fraud prevention, with Moyasar payment integration. Built as a Senior Software Engineer at NEO.',
+      tags: ['Flutter', 'Fintech', 'NEO'],
+      tech: 'Flutter · Analytics · Security · Moyasar',
+      icon: Icons.insights_rounded,
+    ),
+    Project(
       name: 'Servini ERP',
       category: 'Cross-platform ERP',
       description:
@@ -141,6 +151,15 @@ class PortfolioData {
   ];
 
   static const moreProjects = [
+    Project(
+      name: 'gift4You',
+      category: 'Digital gifting · NEO',
+      description:
+          'A platform that boosts customer engagement and simplifies digital gifting.',
+      tags: [],
+      tech: 'Flutter · UI/UX · REST APIs',
+      icon: Icons.card_giftcard_rounded,
+    ),
     Project(
       name: 'Sultan',
       category: 'Online grocery store',
@@ -203,6 +222,12 @@ class PortfolioData {
   ];
 
   static const jobs = [
+    Job('Senior Software Engineer', 'NEO', 'Riyadh, Saudi Arabia · Remote', '04/2026 – Present', [
+      'Full-time mobile app development with international teams on key enterprise projects.',
+      'Worked on mozn, a financial intelligence platform for risk management and fraud prevention, with Moyasar integration.',
+      'Contributed to gift4You, a platform that boosts customer engagement and simplifies digital gifting.',
+      'Built features for RMS (Resource Management System) to optimize resource allocation and efficiency.',
+    ]),
     Job('Flutter Developer', 'Servini Solutions', 'Sousse, Tunisia', '02/2026 – Present', [
       'Developed a cross-platform ERP application for mobile, iPad/tablet, desktop and web.',
       'Worked with cross-functional teams on high-quality deliverables and smooth backend integration using GraphQL.',
