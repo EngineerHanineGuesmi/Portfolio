@@ -150,13 +150,21 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Hanine Guesmi',
-            style: theme.textTheme.displayLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onBackground,
-              height: 1.1,
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Shrink the name on narrow screens so neither word gets split
+              // mid-word ("Hani / ne"). Each word is ~4 font-sizes wide in bold Poppins.
+              final fontSize = (constraints.maxWidth / 4.2).clamp(36.0, 96.0);
+              return Text(
+                'Hanine Guesmi',
+                style: theme.textTheme.displayLarge?.copyWith(
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onBackground,
+                  height: 1.1,
+                ),
+              );
+            },
           ),
           const SizedBox(height: 16),
           Text(
