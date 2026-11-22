@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:scroll_to_index/scroll_to_index.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import '../themes/app_theme.dart';
-import '../widgets/nav_bar.dart';
-import '../widgets/section_title.dart';
-import '../widgets/social_icons.dart';
-import '../constants/strings.dart';
+import '../constants/portfolio_data.dart';
+import '../widgets/phone_showcase.dart';
+import '../widgets/site_header.dart';
+import '../widgets/ui.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,851 +15,516 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final AutoScrollController _scrollController = AutoScrollController();
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
-  bool _isScrolled = false;
-  final double _appBarHeight = 80.0;
+  static const _navItems = ['Home', 'Work', 'Experience', 'About', 'Contact'];
 
-  final List<String> _sections = [
-    'home',
-    'about',
-    'experience',
-    'education',
-    'projects',
-    'contact',
-  ];
+  final _scroll = ScrollController();
+  final _sectionKeys = List.generate(_navItems.length, (_) => GlobalKey());
+  int _active = 0;
+  bool _scrolled = false;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
+    _scroll.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
-    _pageController.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
   void _onScroll() {
-    if (_scrollController.offset > 100) {
-      if (!_isScrolled) {
-        setState(() => _isScrolled = true);
-      }
-    } else {
-      if (_isScrolled) {
-        setState(() => _isScrolled = false);
-      }
+    final scrolled = _scroll.offset > 24;
+    var active = 0;
+    for (var i = 0; i < _sectionKeys.length; i++) {
+      final box = _sectionKeys[i].currentContext?.findRenderObject() as RenderBox?;
+      if (box == null || !box.attached) continue;
+      if (box.localToGlobal(Offset.zero).dy <= 160) active = i;
+    }
+    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 8) {
+      active = _sectionKeys.length - 1;
+    }
+    if (scrolled != _scrolled || active != _active) {
+      setState(() {
+        _scrolled = scrolled;
+        _active = active;
+      });
     }
   }
 
-  Future<void> _scrollToSection(int index) async {
-    await _scrollController.scrollToIndex(
-      index,
-      duration: const Duration(milliseconds: 800),
-      preferPosition: AutoScrollPosition.begin,
-    );
+  void _goTo(int index) {
+    if (index == 0) {
+      _scroll.animateTo(0, duration: const Duration(milliseconds: 700), curve: Curves.easeInOutCubic);
+      return;
+    }
+    final context = _sectionKeys[index].currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeInOutCubic,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
-    final isSmallScreen = size.width < 800;
-
+    final contactIndex = _navItems.length - 1;
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(_appBarHeight),
-        child: NavBar(
-          isScrolled: _isScrolled,
-          onItemTap: (index) => _scrollToSection(index),
-          currentIndex: _currentPage,
+      appBar: SiteHeader(
+        items: _navItems,
+        activeIndex: _active,
+        onSelect: _goTo,
+        scrolled: _scrolled,
+        onContact: () => _goTo(contactIndex),
+      ),
+      endDrawer: SiteDrawer(items: _navItems, activeIndex: _active, onSelect: _goTo),
+      body: SingleChildScrollView(
+        controller: _scroll,
+        child: Column(
+          children: [
+            KeyedSubtree(
+              key: _sectionKeys[0],
+              child: _Hero(onWork: () => _goTo(1), onContact: () => _goTo(contactIndex)),
+            ),
+            const _CompanyStrip(),
+            KeyedSubtree(key: _sectionKeys[1], child: const _WorkSection()),
+            const _PrinciplesSection(),
+            KeyedSubtree(key: _sectionKeys[2], child: const _ExperienceSection()),
+            KeyedSubtree(key: _sectionKeys[3], child: const _AboutSection()),
+            KeyedSubtree(key: _sectionKeys[4], child: const _ContactSection()),
+          ],
         ),
       ),
-      body: Stack(
-        children: [
-          // Background Decoration
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    theme.colorScheme.background,
-                    theme.colorScheme.background.withOpacity(0.9),
-                    theme.colorScheme.background.withOpacity(0.8),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          
-          // Main Content
-          ListView.builder(
-            controller: _scrollController,
-            itemCount: _sections.length,
-            itemBuilder: (context, index) {
-              switch (index) {
-                case 0:
-                  return _buildHeroSection(theme, size);
-                case 1:
-                  return _buildAboutSection(theme, size);
-                case 2:
-                  return _buildExperienceSection(theme, size);
-                case 3:
-                  return _buildEducationSection(theme, size);
-                case 4:
-                  return _buildProjectsSection(theme, size);
-                case 5:
-                  return _buildContactSection(theme, size);
-                default:
-                  return const SizedBox.shrink();
-              }
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: _buildFloatingActionButton(theme),
-    );
-  }
-
-  // Hero Section
-  Widget _buildHeroSection(ThemeData theme, Size size) {
-    final isSmallScreen = size.width < 800;
-    
-    return Container(
-      height: size.height,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Spacer(flex: 2),
-          Text(
-            'Hi, I\'m',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              // Shrink the name on narrow screens so neither word gets split
-              // mid-word ("Hani / ne"). Each word is ~4 font-sizes wide in bold Playfair Display.
-              final fontSize = (constraints.maxWidth / 4.2).clamp(36.0, 96.0);
-              return Text(
-                'Hanine Guesmi',
-                style: theme.textTheme.displayLarge?.copyWith(
-                  fontSize: fontSize,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onBackground,
-                  height: 1.1,
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Mobile Engineer',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: isSmallScreen ? double.infinity : size.width * 0.5,
-            child: Text(
-              'I build exceptional digital experiences with Flutter and native Android. Currently focused on creating beautiful, responsive mobile applications.',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onBackground.withOpacity(0.8),
-                height: 1.6,
-              ),
-            ),
-          ),
-          const SizedBox(height: 40),
-          Row(
-            children: [
-              FilledButton(
-                onPressed: () => _scrollToSection(5), // Scroll to contact
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text('Get In Touch'),
-              ),
-              const SizedBox(width: 20),
-              TextButton(
-                onPressed: () => _scrollToSection(4), // Scroll to projects
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                ),
-                child: const Row(
-                  children: [
-                    Text('View My Work'),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward, size: 18),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          // Social Icons
-          const Padding(
-            padding: EdgeInsets.only(bottom: 40.0),
-            child: Row(
-              children: [
-                SocialIcons(),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // About Section
-  Widget _buildAboutSection(ThemeData theme, Size size) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 80.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SectionTitle(
-            number: '01',
-            title: 'About Me',
-          ),
-          const SizedBox(height: 40),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // About Text
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hello! I\'m Hanine, a passionate Mobile Engineer with 4+ years of experience in building beautiful and functional mobile applications.',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onBackground.withOpacity(0.8),
-                        height: 1.8,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'I specialize in Flutter and native Android development, with a strong focus on creating responsive and accessible user interfaces. My goal is to build applications that not only look great but also provide a seamless user experience.',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onBackground.withOpacity(0.8),
-                        height: 1.8,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Here are a few technologies I\'ve been working with recently:',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onBackground.withOpacity(0.8),
-                        height: 1.8,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Skills Grid
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 8,
-                      children: [
-                        _buildSkillItem(theme, 'Flutter & Dart'),
-                        _buildSkillItem(theme, 'Kotlin & Jetpack Compose'),
-                        _buildSkillItem(theme, 'Firebase'),
-                        _buildSkillItem(theme, 'REST APIs & WebSockets'),
-                        _buildSkillItem(theme, 'BLoC & Riverpod'),
-                        _buildSkillItem(theme, 'Clean Architecture'),
-                        _buildSkillItem(theme, 'CI/CD & Git'),
-                        _buildSkillItem(theme, 'SQLite / Room / Hive'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              // Profile Image - Placeholder for now
-              if (size.width > 1000) ...{
-                const SizedBox(width: 80),
-                Expanded(
-                  child: Center(
-                    child: Container(
-                      width: 300,
-                      height: 300,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: theme.colorScheme.primary.withOpacity(0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        size: 100,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
-              },
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Experience Section
-  Widget _buildExperienceSection(ThemeData theme, Size size) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 80.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SectionTitle(
-            number: '02',
-            title: 'Work Experience',
-          ),
-          const SizedBox(height: 40),
-          // Experience Timeline
-          _buildExperienceItem(
-            theme,
-            'Developer Consultant',
-            'Neo',
-            'Tunisia',
-            '2026 - Present',
-            [
-              'Provided expert technical consultancy and mobile development services, collaborating closely with diverse, international teams on key enterprise projects.',
-              'Contributed to gift4You, a strategic platform that enhances customer engagement and simplifies the digital gifting experience.',
-              'Worked on mozn, an advanced platform for financial intelligence crucial for robust risk management and fraud prevention, featuring Moyasar integration.',
-              'Developed features for RMS (Resource Management System), playing a vital role in optimizing resource allocation and improving operational efficiency.',
-            ],
-          ),
-          const SizedBox(height: 40),
-          _buildExperienceItem(
-            theme,
-            'Mobile Developer – Flutter',
-            'Servini',
-            'Tunisia',
-            '02/2026 - Present',
-            [
-              'Developing a comprehensive ERP system optimized for tablet and mobile devices using Flutter.',
-              'Implementing key modules including Fiche Technique, Kitchen Display System (KDS), and dynamic reporting.',
-              'Integrating real-time functionalities leveraging GraphQL API and Apollo client.',
-            ],
-          ),
-          const SizedBox(height: 40),
-          _buildExperienceItem(
-            theme,
-            'Mobile Developer – Flutter (BinYdik)',
-            'Freelance',
-            'Sousse, Tunisia',
-            '03/2026 - Present',
-            [
-              'Built BinYdik from scratch, taking full ownership of the technical architecture, UI/UX design (no Figma used), development, and testing for iOS & Android.',
-              'Implemented essential features such as real-time chat and robust QR/Barcode scanning capabilities.',
-              'Managed end-to-end deployment to Google Play Store and Apple App Store.',
-              'Successfully launched the latest Android version, reaching over 1K+ downloads and trending on the Play Store.',
-              'Delivered a Flutter e-commerce app (catalog, cart, checkout, Google Maps), accelerating delivery speed by 40% with AI-assisted tools.',
-            ],
-          ),
-          const SizedBox(height: 40),
-          _buildExperienceItem(
-            theme,
-            'Mobile Developer – Flutter & Kotlin',
-            'Softylines',
-            'Sousse, Tunisia',
-            '09/2021 - 09/2025',
-            [
-              'Built 8+ cross-platform and native production apps (e-commerce, social media, edtech) with measurable results.',
-              'Collaborated with designers, back-end engineers, product owners, scrum masters, and QA teams to deliver pixel-perfect UI and meet project requirements.',
-              'Led code reviews and enforced Clean Architecture while mentoring and guiding 2 junior developers in best practices for Flutter.',
-              'Optimized app performance by profiling with Flutter DevTools, improving responsiveness and stability.',
-              'Implemented unit and integration testing, reducing crash rates by 70% using Crashlytics.',
-              'Implemented CI/CD pipelines with GitHub Actions, improving release speed by 50%.',
-            ],
-          ),
-          const SizedBox(height: 40),
-          _buildExperienceItem(
-            theme,
-            'Final Year Internship – Bachelor\'s',
-            'Houloul',
-            'Sousse, Tunisia',
-            '02/2021 - 07/2021',
-            [
-              'Analysis, design, and development of Django/Python order-tracking web app with Raspberry Pi camera integration for automated tracking.',
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Education Section
-  Widget _buildEducationSection(ThemeData theme, Size size) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 80.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SectionTitle(
-            number: '03',
-            title: 'Education',
-          ),
-          const SizedBox(height: 40),
-          _buildExperienceItem(
-            theme,
-            'Engineering Degree in Software Engineering',
-            'Polytechnic University of Sousse',
-            'Sousse, Tunisia',
-            '09/2021 - 06/2025',
-            [
-              'Graduated with High Honors',
-            ],
-          ),
-          const SizedBox(height: 40),
-          _buildExperienceItem(
-            theme,
-            'Bachelor\'s in Information Technology',
-            'Higher Institute of Technological Studies',
-            'Kairouan, Tunisia',
-            '09/2018 - 07/2021',
-            [
-              'Graduated with High Honors',
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Projects Section
-  Widget _buildProjectsSection(ThemeData theme, Size size) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 80.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SectionTitle(
-            number: '04',
-            title: 'Featured Projects',
-          ),
-          const SizedBox(height: 40),
-          // Projects Grid
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: size.width > 1200 ? 3 : (size.width > 700 ? 2 : 1),
-            crossAxisSpacing: 24,
-            mainAxisSpacing: 24,
-            children: [
-              _buildProjectCard(
-                theme,
-                'gift4You',
-                'A strategic platform that enhances customer engagement and simplifies the digital gifting experience.',
-                'Flutter, UI/UX, REST APIs',
-                '#',
-                Icons.card_giftcard,
-              ),
-              _buildProjectCard(
-                theme,
-                'mozn',
-                'An advanced platform for financial intelligence crucial for robust risk management and fraud prevention.',
-                'Flutter, Analytics, Security, Moyasar',
-                '#',
-                Icons.analytics,
-              ),
-              _buildProjectCard(
-                theme,
-                'Servini ERP',
-                'A comprehensive ERP system for restaurant management featuring real-time KDS, dynamic reports, and Fiche Technique capabilities.',
-                'Flutter, GraphQL, Apollo',
-                '#',
-                Icons.dashboard,
-                imageUrl: 'assets/images/servini.png',
-              ),
-              _buildProjectCard(
-                theme,
-                'BinYdik',
-                'A comprehensive mobile app featuring real-time chat and QR/Barcode scanning. Designed entirely from scratch (no Figma) and reached 1K+ downloads trending on Play Store.',
-                'Flutter, Chat, Scanner',
-                'https://play.google.com/store/apps/details?id=com.appilix.app1761846119&hl=en',
-                Icons.storefront,
-                appStoreUrl: 'https://apps.apple.com/tn/app/binydik/id6759522629',
-                imageUrl: 'assets/images/binydik.png',
-              ),
-              _buildProjectCard(
-                theme,
-                'TakiAcademy',
-                'First Tunisian e-learning app (Flutter), achieving 100K+ downloads by implementing video streaming, video playback, progress tracking and gamified learning.',
-                'Flutter, Socket.IO, vdocipher',
-                'https://play.google.com/store/apps/details?id=com.softylines.takiacademy&hl=en',
-                Icons.school,
-              ),
-              _buildProjectCard(
-                theme,
-                'Taki Kids',
-                'Educational Mobile Game, reaching 10K+ downloads.',
-                'Kotlin, Animations, FCM, ROOM',
-                'https://play.google.com/store/apps/details?id=com.softylines.takikids',
-                Icons.child_care,
-              ),
-              _buildProjectCard(
-                theme,
-                'Proxymabel',
-                'Stock Management App with RFID SDK integration and real-time sync.',
-                'Kotlin, Jetpack Compose',
-                'https://www.proximabel.com/',
-                Icons.inventory,
-              ),
-              _buildProjectCard(
-                theme,
-                'LinkFoot',
-                'Football Community App with team matching, Reels, Voice/Video calls, private and group chat.',
-                'Flutter, FCM, WebRTC, Socket.IO, Stripe',
-                'https://play.google.com/store/apps/details?id=com.linkefoot.linkefootApp&hl=fr',
-                Icons.sports_soccer,
-              ),
-              _buildProjectCard(
-                theme,
-                'Chichkhan - Boritos',
-                'Development of two SaaS applications for restaurant management (Delivery App & Admin App).',
-                'Flutter, Push Notifications FCM, Flavors',
-                'https://play.google.com/store/apps/details?id=com.chichkhan.app',
-                Icons.restaurant,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Contact Section
-  Widget _buildContactSection(ThemeData theme, Size size) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 80.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const SectionTitle(
-            number: '05',
-            title: 'Get In Touch',
-          ),
-          const SizedBox(height: 40),
-          Text(
-            'Have a project in mind or want to discuss potential opportunities?',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.onBackground.withOpacity(0.9),
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'I\'m currently looking for new opportunities, my inbox is always open. Whether you have a question or just want to say hi, I\'ll try my best to get back to you!',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onBackground.withOpacity(0.7),
-              height: 1.8,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 40),
-          FilledButton(
-            onPressed: () async {
-              final Uri emailLaunchUri = Uri(
-                scheme: 'mailto',
-                path: 'hanine.guesmi.work@gmail.com',
-                query: 'subject=Let\'s work together!&body=Hi Hanine,',
-              );
-              if (await canLaunchUrl(emailLaunchUri)) {
-                await launchUrl(emailLaunchUri);
-              }
-            },
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Say Hello'),
-          ),
-          const SizedBox(height: 80),
-          // Footer
-          Text(
-            'Designed & Built by Hanine Guesmi',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onBackground.withOpacity(0.5),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '© ${DateTime.now().year} All Rights Reserved',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onBackground.withOpacity(0.5),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Helper Widgets
-  Widget _buildSkillItem(ThemeData theme, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Text(
-        text,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w500,
+      floatingActionButton: AnimatedScale(
+        scale: _scrolled ? 1 : 0,
+        duration: const Duration(milliseconds: 200),
+        child: FloatingActionButton.small(
+          tooltip: 'Back to top',
+          onPressed: () => _goTo(0),
+          shape: const CircleBorder(),
+          child: const Icon(Icons.arrow_upward_rounded),
         ),
       ),
     );
   }
+}
 
-  Widget _buildExperienceItem(
-    ThemeData theme,
-    String position,
-    String company,
-    String location,
-    String duration,
-    List<String> points,
-  ) {
-    return Column(
+// ───────────────────────────── Hero ─────────────────────────────
+
+class _Hero extends StatelessWidget {
+  const _Hero({required this.onWork, required this.onContact});
+
+  final VoidCallback onWork;
+  final VoidCallback onContact;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final width = MediaQuery.sizeOf(context).width;
+    final narrow = isNarrow(context);
+    final headline = narrow ? (width * 0.105).clamp(34.0, 54.0) : (width * 0.05).clamp(44.0, 66.0);
+
+    final text = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Eyebrow('Open to new opportunities'),
+        const SizedBox(height: 24),
+        AccentTitle(
+          const [
+            ('Crafting ', false),
+            ('fluid', true),
+            (' mobile ', false),
+            ('experiences', true),
+            (' for ambitious products.', false),
+          ],
+          style: theme.serif(headline).copyWith(height: 1.08),
+        ),
+        const SizedBox(height: 22),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 540),
+          child: Text(PortfolioData.heroDescription, style: theme.body(size: 17)),
+        ),
+        const SizedBox(height: 32),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
           children: [
-            // Timeline dot
-            Container(
-              width: 16,
-              height: 16,
-              margin: const EdgeInsets.only(right: 16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                shape: BoxShape.circle,
-              ),
-            ),
-            // Position and company
-            Column(
+            PillButton(label: 'Explore my work', icon: Icons.arrow_downward_rounded, onPressed: onWork),
+            PillButton(label: "Let's talk", filled: false, onPressed: onContact),
+          ],
+        ),
+        const SizedBox(height: 40),
+        ResponsiveGrid(
+          spacing: 12,
+          columnsFor: (w) => w > 520 ? 4 : 2,
+          children: [
+            for (final m in PortfolioData.heroStats)
+              MetricTile(value: m.value, label: m.label, outlined: true),
+          ],
+        ),
+      ],
+    )
+        .animate()
+        .fadeIn(duration: 600.ms)
+        .slideY(begin: 0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
+
+    final visual = const PhoneShowcase()
+        .animate()
+        .fadeIn(delay: 150.ms, duration: 700.ms)
+        .scale(begin: const Offset(0.96, 0.96), end: const Offset(1, 1), duration: 700.ms);
+
+    return ContentWidth(
+      top: narrow ? 108 : 132,
+      bottom: narrow ? 56 : 80,
+      child: narrow
+          ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  position,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$company • $location',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onBackground.withOpacity(0.7),
+                text,
+                const SizedBox(height: 48),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: visual,
                   ),
                 ),
               ],
+            )
+          : Row(
+              children: [
+                Expanded(flex: 6, child: text),
+                const SizedBox(width: 56),
+                Expanded(flex: 5, child: visual),
+              ],
             ),
-            const Spacer(),
-            // Duration
-            Text(
-              duration,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onBackground.withOpacity(0.6),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // Timeline line
-        Container(
-          width: 2,
-          height: 40,
-          margin: const EdgeInsets.only(left: 7.5),
-          color: theme.colorScheme.primary.withOpacity(0.2),
-        ),
-        // Points
-        ...points.map((point) => Padding(
-          padding: const EdgeInsets.only(left: 24, bottom: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '• ',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  point,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onBackground.withOpacity(0.8),
-                    height: 1.6,
-                  ),
-                ),
-              ),
-            ],
+    );
+  }
+}
+
+// ───────────────────────────── Company strip ─────────────────────────────
+
+class _CompanyStrip extends StatelessWidget {
+  const _CompanyStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final narrow = isNarrow(context);
+    final label = Text("WHERE I'VE BUILT", style: theme.caps());
+    final names = Wrap(
+      alignment: narrow ? WrapAlignment.start : WrapAlignment.spaceBetween,
+      spacing: 32,
+      runSpacing: 12,
+      children: [
+        for (final c in PortfolioData.companies)
+          Text(
+            c.toUpperCase(),
+            style: theme.serif(18, color: theme.muted).copyWith(letterSpacing: 2.5),
           ),
-        )).toList(),
       ],
     );
-  }
 
-  Widget _buildProjectCard(
-    ThemeData theme,
-    String title,
-    String description,
-    String technologies,
-    String url,
-    IconData icon, {
-    String? appStoreUrl,
-    String? imageUrl,
-  }) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      decoration: BoxDecoration(
+        border: Border.symmetric(horizontal: BorderSide(color: theme.hairline)),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: theme.colorScheme.surface,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (imageUrl != null)
-              Container(
-                height: 180,
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Image.asset(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
-                      child: Center(
-                        child: Text(
-                          'Image not found\nPlease add $imageUrl',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: theme.colorScheme.primary),
+      child: ContentWidth(
+        child: narrow
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [label, const SizedBox(height: 14), names],
+              )
+            : Row(
+                children: [label, const SizedBox(width: 48), Expanded(child: names)],
+              ),
+      ),
+    );
+  }
+}
+
+// ───────────────────────────── Work ─────────────────────────────
+
+class _WorkSection extends StatelessWidget {
+  const _WorkSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ContentWidth(
+      top: 96,
+      bottom: 48,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionHeader(
+            eyebrow: 'Selected work',
+            title: [('Selected works ', false), ('& systems', true)],
+            subtitle:
+                "Production apps I've designed, built and shipped, from e-learning at 100K+ "
+                'downloads to fintech and restaurant ERPs.',
+          ),
+          const SizedBox(height: 48),
+          for (var i = 0; i < PortfolioData.featuredProjects.length; i++) ...[
+            if (i > 0) const SizedBox(height: 24),
+            _FeaturedProjectCard(
+              project: PortfolioData.featuredProjects[i],
+              reversed: i.isOdd,
+            ),
+          ],
+          const SizedBox(height: 72),
+          Text('More projects', style: theme.serif(28)),
+          const SizedBox(height: 24),
+          ResponsiveGrid(
+            columnsFor: (w) => w > 1000 ? 3 : (w > 620 ? 2 : 1),
+            children: [
+              for (final p in PortfolioData.moreProjects) _ProjectCard(project: p),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeaturedProjectCard extends StatelessWidget {
+  const _FeaturedProjectCard({required this.project, required this.reversed});
+
+  final Project project;
+  final bool reversed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return HoverCard(
+      padding: const EdgeInsets.all(14),
+      radius: 28,
+      child: LayoutBuilder(builder: (context, constraints) {
+        final wide = constraints.maxWidth > 760;
+        final visual = _ProjectVisual(project: project, height: wide ? 360 : 220);
+        final content = Padding(
+          padding: EdgeInsets.all(wide ? 28 : 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(spacing: 8, runSpacing: 8, children: [for (final t in project.tags) TagChip(t)]),
+              const SizedBox(height: 18),
+              Text(project.name, style: theme.serif(wide ? 40 : 30)),
+              const SizedBox(height: 6),
+              Text(
+                project.category,
+                style: theme.serif(17, weight: FontWeight.w500, color: theme.colorScheme.primary)
+                    .copyWith(fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 14),
+              Text(project.description, style: theme.body()),
+              if (project.metrics.isNotEmpty) ...[
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    for (var i = 0; i < project.metrics.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 12),
+                      Expanded(
+                        child: MetricTile(
+                          value: project.metrics[i].value,
+                          label: project.metrics[i].label,
                         ),
                       ),
-                    );
-                  },
+                    ],
+                  ],
                 ),
-              )
-            else
-              // Project icon
+              ],
+              const SizedBox(height: 18),
+              Text(project.tech, style: theme.body(size: 13.5, color: theme.faint)),
+              if (project.playUrl != null || project.appStoreUrl != null || project.webUrl != null) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 16,
+                  children: [
+                    if (project.playUrl != null) LinkButton(label: 'Google Play', url: project.playUrl!),
+                    if (project.appStoreUrl != null) LinkButton(label: 'App Store', url: project.appStoreUrl!),
+                    if (project.webUrl != null) LinkButton(label: 'Website', url: project.webUrl!),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        );
+
+        if (!wide) {
+          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [visual, content]);
+        }
+        final children = [
+          Expanded(flex: 5, child: visual),
+          const SizedBox(width: 8),
+          Expanded(flex: 6, child: content),
+        ];
+        return Row(children: reversed ? children.reversed.toList() : children);
+      }),
+    );
+  }
+}
+
+class _ProjectVisual extends StatelessWidget {
+  const _ProjectVisual({required this.project, required this.height});
+
+  final Project project;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final dark = theme.brightness == Brightness.dark;
+    return Container(
+      height: height,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            cs.primary.withValues(alpha: dark ? 0.24 : 0.20),
+            cs.tertiary.withValues(alpha: dark ? 0.08 : 0.12),
+            cs.secondary.withValues(alpha: dark ? 0.16 : 0.38),
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -50,
+            top: -50,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: cs.primary.withValues(alpha: 0.25), width: 1.5),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -30,
+            bottom: -60,
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: cs.surface.withValues(alpha: 0.35),
+              ),
+            ),
+          ),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 92,
+                  height: 92,
+                  decoration: BoxDecoration(
+                    color: cs.surface,
+                    borderRadius: BorderRadius.circular(26),
+                    border: Border.all(color: theme.hairline),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 30,
+                        offset: const Offset(0, 14),
+                      ),
+                    ],
+                  ),
+                  child: Icon(project.icon, size: 42, color: cs.primary),
+                ),
+                const SizedBox(height: 16),
+                Text(project.name, style: theme.serif(20)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProjectCard extends StatelessWidget {
+  const _ProjectCard({required this.project});
+  final Project project;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final url = project.primaryUrl;
+    return HoverCard(
+      onTap: url == null ? null : () => openLink(url),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
               Container(
-                width: 48,
-                height: 48,
-                margin: const EdgeInsets.only(bottom: 20),
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  color: theme.tint,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  icon,
-                  color: theme.colorScheme.primary,
-                  size: 24,
-                ),
+                child: Icon(project.icon, size: 22, color: theme.colorScheme.primary),
               ),
-            // Project title
-            Text(
-              title,
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
+              const Spacer(),
+              if (url != null) Icon(Icons.north_east_rounded, size: 18, color: theme.faint),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text(project.name, style: theme.serif(22)),
+          const SizedBox(height: 4),
+          Text(
+            project.category,
+            style: theme.body(size: 13.5, weight: FontWeight.w600, color: theme.colorScheme.primary),
+          ),
+          const SizedBox(height: 10),
+          Text(project.description, style: theme.body(size: 14.5)),
+          const Spacer(),
+          const SizedBox(height: 16),
+          Text(project.tech, style: theme.body(size: 12.5, color: theme.faint)),
+        ],
+      ),
+    );
+  }
+}
+
+// ───────────────────────────── Principles ─────────────────────────────
+
+class _PrinciplesSection extends StatelessWidget {
+  const _PrinciplesSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      color: theme.colorScheme.surface.withValues(alpha: 0.5),
+      child: ContentWidth(
+        top: 88,
+        bottom: 88,
+        child: Column(
+          children: [
+            const SectionHeader(
+              eyebrow: 'Principles',
+              title: [('How I ', false), ('build', true)],
+              subtitle: 'Four habits that show up in every app I ship.',
+              centered: true,
             ),
-            const SizedBox(height: 12),
-            // Project description
-            Text(
-              description,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.8),
-                height: 1.6,
-              ),
-            ),
-            const Spacer(),
-            // Technologies
-            Text(
-              technologies,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 16),
-            // View Project Button
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            const SizedBox(height: 44),
+            ResponsiveGrid(
+              columnsFor: (w) => w > 1000 ? 4 : (w > 560 ? 2 : 1),
               children: [
-                if (url.isNotEmpty && url != '#')
-                  FilledButton.tonal(
-                    onPressed: () async {
-                      if (await canLaunchUrl(Uri.parse(url))) {
-                        await launchUrl(Uri.parse(url));
-                      }
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                      foregroundColor: theme.colorScheme.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(appStoreUrl != null ? 'Play Store' : 'View Project'),
-                  ),
-                if (appStoreUrl != null)
-                  FilledButton.tonal(
-                    onPressed: () async {
-                      if (await canLaunchUrl(Uri.parse(appStoreUrl))) {
-                        await launchUrl(Uri.parse(appStoreUrl));
-                      }
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                      foregroundColor: theme.colorScheme.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text('App Store'),
-                  ),
+                for (var i = 0; i < PortfolioData.principles.length; i++)
+                  _PrincipleCard(index: i, principle: PortfolioData.principles[i]),
               ],
             ),
           ],
@@ -870,19 +532,368 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
 
-  Widget _buildFloatingActionButton(ThemeData theme) {
-    return FloatingActionButton(
-      onPressed: () {
-        _scrollController.animateTo(
-          0,
-          duration: const Duration(milliseconds: 800),
-          curve: Curves.easeInOut,
+class _PrincipleCard extends StatelessWidget {
+  const _PrincipleCard({required this.index, required this.principle});
+
+  final int index;
+  final Principle principle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return HoverCard(
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(color: theme.tint, shape: BoxShape.circle),
+            child: Icon(principle.icon, size: 20, color: theme.colorScheme.primary),
+          ),
+          const SizedBox(height: 18),
+          Text('0${index + 1} · PRINCIPLE', style: theme.caps()),
+          const SizedBox(height: 6),
+          Text(principle.title, style: theme.serif(21)),
+          const SizedBox(height: 8),
+          Text(principle.description, style: theme.body(size: 14.5)),
+        ],
+      ),
+    );
+  }
+}
+
+// ───────────────────────────── Experience ─────────────────────────────
+
+class _ExperienceSection extends StatelessWidget {
+  const _ExperienceSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return ContentWidth(
+      top: 96,
+      bottom: 48,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionHeader(
+            eyebrow: 'Experience',
+            title: [('Career ', false), ('journey', true)],
+            subtitle: 'Shipping mobile products in product teams, as a consultant, and solo.',
+          ),
+          const SizedBox(height: 40),
+          for (var i = 0; i < PortfolioData.jobs.length; i++) ...[
+            if (i > 0) const SizedBox(height: 16),
+            _JobCard(job: PortfolioData.jobs[i]),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _JobCard extends StatelessWidget {
+  const _JobCard({required this.job});
+  final Job job;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return HoverCard(
+      padding: const EdgeInsets.all(28),
+      child: LayoutBuilder(builder: (context, constraints) {
+        final wide = constraints.maxWidth > 700;
+        final meta = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(job.period,
+                style: theme.body(size: 14, weight: FontWeight.w700, color: theme.colorScheme.primary)),
+            Text(job.location, style: theme.body(size: 13, color: theme.faint)),
+          ],
         );
-      },
-      backgroundColor: theme.colorScheme.primary,
-      foregroundColor: theme.colorScheme.onPrimary,
-      child: const Icon(Icons.arrow_upward),
+        final details = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(job.role, style: theme.serif(24)),
+            const SizedBox(height: 2),
+            Text(job.company,
+                style: theme.body(size: 15.5, weight: FontWeight.w600, color: theme.colorScheme.onSurface)),
+            const SizedBox(height: 14),
+            for (final point in job.points)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 10),
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.8),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(point, style: theme.body(size: 15))),
+                  ],
+                ),
+              ),
+          ],
+        );
+        if (!wide) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [meta, const SizedBox(height: 14), details],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(width: 190, child: meta),
+            const SizedBox(width: 24),
+            Expanded(child: details),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+// ───────────────────────────── About ─────────────────────────────
+
+class _AboutSection extends StatelessWidget {
+  const _AboutSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final intro = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionHeader(
+          eyebrow: 'About',
+          title: [('Engineering with ', false), ('care', true)],
+        ),
+        const SizedBox(height: 20),
+        for (final p in PortfolioData.about) ...[
+          Text(p, style: theme.body(size: 17)),
+          const SizedBox(height: 14),
+        ],
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            PillButton(
+              label: 'LinkedIn',
+              icon: FontAwesomeIcons.linkedinIn,
+              filled: false,
+              onPressed: () => openLink(PortfolioData.linkedinUrl),
+            ),
+            PillButton(
+              label: 'GitHub',
+              icon: FontAwesomeIcons.github,
+              filled: false,
+              onPressed: () => openLink(PortfolioData.githubUrl),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    final side = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Education', style: theme.serif(26)),
+        const SizedBox(height: 16),
+        for (final d in PortfolioData.degrees) ...[
+          HoverCard(
+            padding: const EdgeInsets.all(20),
+            radius: 20,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: theme.tint,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.school_outlined, size: 22, color: theme.colorScheme.primary),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(d.title, style: theme.serif(19)),
+                      const SizedBox(height: 4),
+                      Text(d.school,
+                          style: theme.body(size: 14.5, weight: FontWeight.w600, color: theme.colorScheme.primary)),
+                      Text('${d.location} · ${d.period}', style: theme.body(size: 13, color: theme.faint)),
+                      const SizedBox(height: 10),
+                      TagChip(d.note),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        const SizedBox(height: 24),
+        Text('Toolkit', style: theme.serif(26)),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final s in PortfolioData.skills)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: theme.hairline),
+                ),
+                child: Text(s,
+                    style: theme.body(size: 13.5, weight: FontWeight.w600, color: theme.colorScheme.onSurface)
+                        .copyWith(height: 1.3)),
+              ),
+          ],
+        ),
+      ],
+    );
+
+    return ContentWidth(
+      top: 96,
+      bottom: 48,
+      child: LayoutBuilder(builder: (context, constraints) {
+        if (constraints.maxWidth < 900) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [intro, const SizedBox(height: 48), side],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: 5, child: intro),
+            const SizedBox(width: 64),
+            Expanded(flex: 6, child: side),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+// ───────────────────────────── Contact ─────────────────────────────
+
+class _ContactSection extends StatelessWidget {
+  const _ContactSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final narrow = isNarrow(context);
+    final footerStyle = theme.body(size: 13, color: theme.faint);
+
+    return ContentWidth(
+      top: 96,
+      bottom: 32,
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: narrow ? 24 : 56, vertical: narrow ? 40 : 64),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: cs.primary.withValues(alpha: 0.25)),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  cs.primary.withValues(alpha: 0.16),
+                  cs.secondary.withValues(alpha: 0.14),
+                ],
+              ),
+            ),
+            child: Column(
+              children: [
+                const Eyebrow('Contact'),
+                const SizedBox(height: 20),
+                AccentTitle(
+                  const [
+                    ("Let's build something ", false),
+                    ('remarkable', true),
+                    (' together.', false),
+                  ],
+                  style: theme.serif(narrow ? 34 : 52).copyWith(height: 1.1),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: Text(PortfolioData.contactText,
+                      style: theme.body(size: 17), textAlign: TextAlign.center),
+                ),
+                const SizedBox(height: 28),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    PillButton(
+                      label: 'Email me',
+                      icon: Icons.mail_outline_rounded,
+                      onPressed: () => openLink(
+                          "mailto:${PortfolioData.email}?subject=Let's%20work%20together"),
+                    ),
+                    PillButton(
+                      label: 'LinkedIn',
+                      icon: FontAwesomeIcons.linkedinIn,
+                      filled: false,
+                      onPressed: () => openLink(PortfolioData.linkedinUrl),
+                    ),
+                    PillButton(
+                      label: 'GitHub',
+                      icon: FontAwesomeIcons.github,
+                      filled: false,
+                      onPressed: () => openLink(PortfolioData.githubUrl),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                SelectableText(PortfolioData.email, style: theme.body(size: 14, color: theme.faint)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 40),
+          if (narrow)
+            Column(
+              children: [
+                Text('© ${DateTime.now().year} ${PortfolioData.name}', style: footerStyle),
+                Text('Designed and built with Flutter', style: footerStyle),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Text('© ${DateTime.now().year} ${PortfolioData.name}', style: footerStyle),
+                const Spacer(),
+                Text('Designed and built with Flutter', style: footerStyle),
+              ],
+            ),
+        ],
+      ),
     );
   }
 }
