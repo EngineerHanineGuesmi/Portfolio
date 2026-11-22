@@ -153,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
           LayoutBuilder(
             builder: (context, constraints) {
               // Shrink the name on narrow screens so neither word gets split
-              // mid-word ("Hani / ne"). Each word is ~4 font-sizes wide in bold Poppins.
+              // mid-word ("Hani / ne"). Each word is ~4 font-sizes wide in bold Playfair Display.
               final fontSize = (constraints.maxWidth / 4.2).clamp(36.0, 96.0);
               return Text(
                 'Hanine Guesmi',
