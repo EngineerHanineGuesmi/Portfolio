@@ -44,8 +44,11 @@ class SiteHeader extends StatelessWidget implements PreferredSizeWidget {
             if (!narrow) ...[
               _NavPills(items: items, activeIndex: activeIndex, onSelect: onSelect),
               const Spacer(),
+              const ThemeToggle(),
+              const SizedBox(width: 8),
               PillButton(label: "Let's talk", onPressed: onContact, compact: true),
-            ] else
+            ] else ...[
+              const ThemeToggle(),
               Builder(
                 builder: (context) => IconButton(
                   tooltip: 'Menu',
@@ -53,6 +56,7 @@ class SiteHeader extends StatelessWidget implements PreferredSizeWidget {
                   onPressed: () => Scaffold.of(context).openEndDrawer(),
                 ),
               ),
+            ],
           ],
         ),
       ),

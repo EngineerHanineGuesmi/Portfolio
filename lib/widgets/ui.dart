@@ -14,6 +14,24 @@ Future<void> openLink(String url) async {
 /// Opens the CV PDF served next to the site (works under any base path).
 Future<void> openCv() => openLink(Uri.base.resolve(PortfolioData.cvFile).toString());
 
+/// Site theme. Dark is the default; the header toggle switches it.
+final themeMode = ValueNotifier<ThemeMode>(ThemeMode.dark);
+
+/// Sun/moon button that flips between dark and light.
+class ThemeToggle extends StatelessWidget {
+  const ThemeToggle({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return IconButton(
+      tooltip: dark ? 'Light mode' : 'Dark mode',
+      icon: Icon(dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+      onPressed: () => themeMode.value = dark ? ThemeMode.light : ThemeMode.dark,
+    );
+  }
+}
+
 bool isNarrow(BuildContext context) => MediaQuery.sizeOf(context).width < 900;
 
 extension SiteTheme on ThemeData {
