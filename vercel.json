@@ -4,5 +4,15 @@
   "installCommand": "if [ ! -d flutter ]; then git clone https://github.com/flutter/flutter.git --depth 1 -b 3.38.9 flutter; fi && flutter/bin/flutter config --enable-web --no-analytics && flutter/bin/flutter pub get",
   "buildCommand": "flutter/bin/flutter build web --release --base-href /",
   "outputDirectory": "build/web",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "headers": [
+    {
+      "source": "/(assets|canvaskit|icons)/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800, stale-while-revalidate=86400" }]
+    },
+    {
+      "source": "/(main.dart.js|flutter.js|flutter_bootstrap.js|favicon.png)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=604800" }]
+    }
+  ]
 }
